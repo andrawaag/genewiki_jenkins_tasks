@@ -1,0 +1,64 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Data Source: Cancer Biomarkers database (https://www.cancergenomeinterpreter.org/biomarkers)
+Data Type: Variant
+Properties: positive therapeutic predictor (drug or therapy), negative therapeutic predictor (drug or therapy)
+External IDs: HGVS nomeclature
+Schedule: Runs Monthly</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>5</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>pwd
+echo $WDUSER
+
+virtualenv -p python3.6 venv
+. venv/bin/activate
+pip install --upgrade pip
+pip install wikidataintegrator
+
+git clone https://github.com/sulab/scheduled-bots.git
+cd scheduled-bots
+python3 setup.py install
+pip install -r requirements.txt
+cd ..
+
+cd scheduled-bots/scheduled_bots/cgi/
+
+wget --no-check-certificate https://www.cancergenomeinterpreter.org/data/cgi_biomarkers_latest.zip
+unzip cgi_biomarkers_latest.zip
+
+python3 normalize_alteration_type.py
+python3 normalize_primary_tumor_type.py
+python3 normalize_drugs.py
+python3 bot.py --path cgi_biomarkers_per_variant.tsv
+python3 ../logger/bot_log_parser.py logs</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

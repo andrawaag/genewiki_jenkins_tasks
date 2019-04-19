@@ -1,0 +1,58 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Data Source: MyGene.info (https://mygene.info/), which gets data from Entrez and Ensembl (https://mygene.info/v3/metadata)
+Data Type: Gene (genes found in the following taxons: yeast, worm, fly, zebrafish, mouse, rat (NCBI taxonomy IDs: 559292, 6239, 7227, 7955. 10090, 10116 respectively))
+Properties: subclass of (genomic type), found in taxon (taxon),  encodes (protein), strand orientation, genomic start, genomic end, chromosome, cytogenetic location
+External IDs: Entrez Gene ID, Ensembl Gene ID, Ensembl Transcript ID,  RefSeq RNA ID, HomoloGene ID, Saccharomyces Genome Database ID, Mouse Genome Informatics ID, MGI Gene Symbol, Wormbase Gene ID, FlyBase Gene ID, ZFIN Gene ID, Rat Genome Database ID</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>5</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>pwd
+echo $WDUSER
+
+virtualenv -p python3.6 venv
+. venv/bin/activate
+pip install --upgrade pip
+pip install wikidataintegrator
+
+git clone https://github.com/sulab/scheduled-bots.git
+cd scheduled-bots
+python3 setup.py install
+pip install jsonasobj
+pip install -r requirements.txt
+cd ..
+
+cd scheduled-bots/scheduled_bots/geneprotein/
+
+python3 GeneBot.py --taxon 559292,6239,7227,7955,10090,10116,9545
+python3 ../logger/bot_log_parser.py logs</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>
